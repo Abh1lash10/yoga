@@ -233,7 +233,7 @@ class CameraWindow(QWidget):
         left_panel.addWidget(control_bar)
         main_split.addLayout(left_panel, stretch=6)
 
-        # RIGHT: Reference Pose Panel + Posture HUD
+        # RIGHT: Reference Pose Panel + Live Posture HUD Panel (40% width)
         right_panel = QVBoxLayout()
         right_panel.setSpacing(10)
 
@@ -241,52 +241,6 @@ class CameraWindow(QWidget):
         self.reference_panel = ReferencePosePanel(self.selected_pose, parent=self)
         self.reference_panel.ghost_mode_toggled.connect(self._on_ghost_mode_toggled)
         right_panel.addWidget(self.reference_panel)
-
-        main_split.addLayout(right_panel, stretch=4)
-        outer_layout.addLayout(main_split)
-
-        # ==========================================
-        # RIGHT: Live Posture HUD Panel (40% width)
-        # ==========================================
-        right_panel = QVBoxLayout()
-        right_panel.setSpacing(12)
-
-        # 1. Selected Pose Header Card
-        pose_info_card = QFrame()
-        pose_info_card.setProperty("class", "card")
-        p_layout = QVBoxLayout(pose_info_card)
-        p_layout.setContentsMargins(14, 12, 14, 12)
-        p_layout.setSpacing(4)
-
-        top_info_row = QHBoxLayout()
-        self.lbl_selected_pose_name = QLabel("Warrior II")
-        self.lbl_selected_pose_name.setStyleSheet("font-size: 19px; font-weight: bold; color: #FFFFFF;")
-        top_info_row.addWidget(self.lbl_selected_pose_name)
-        top_info_row.addStretch()
-
-        self.lbl_target_hold = QLabel("Target Hold: 20s")
-        self.lbl_target_hold.setStyleSheet("color: #A78BFA; font-weight: bold; font-size: 12px;")
-        top_info_row.addWidget(self.lbl_target_hold)
-        p_layout.addLayout(top_info_row)
-
-        self.lbl_selected_sanskrit = QLabel("Virabhadrasana II")
-        self.lbl_selected_sanskrit.setStyleSheet(f"color: {settings.THEME['text_muted']}; font-style: italic; font-size: 12px;")
-        p_layout.addWidget(self.lbl_selected_sanskrit)
-
-        # Detected Pose Pill
-        self.lbl_detected_pose = QLabel("Detected: Neutral Stance")
-        self.lbl_detected_pose.setStyleSheet("""
-            background-color: #0F172A;
-            color: #38BDF8;
-            border: 1px solid #334155;
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 11px;
-            font-weight: 500;
-            margin-top: 4px;
-        """)
-        p_layout.addWidget(self.lbl_detected_pose)
-        right_panel.addWidget(pose_info_card)
 
         # 2. Large Overall Posture Indicator Card
         score_hud_card = QFrame()
@@ -419,7 +373,8 @@ class CameraWindow(QWidget):
 
         right_panel.addWidget(self.feedback_card, stretch=2)
 
-        main_layout.addLayout(right_panel, stretch=4)
+        main_split.addLayout(right_panel, stretch=4)
+        outer_layout.addLayout(main_split)
 
     def start_camera(self) -> None:
         """Starts the background camera worker."""

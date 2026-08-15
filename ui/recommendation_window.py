@@ -27,6 +27,7 @@ class RecommendationWindow(QWidget):
     """Personalized Yoga Recommendation View."""
 
     start_practice = Signal(dict)
+    practice_pose_selected = start_practice
 
     def __init__(self, db: Database, user: Optional[Dict[str, Any]] = None, parent=None):
         super().__init__(parent)

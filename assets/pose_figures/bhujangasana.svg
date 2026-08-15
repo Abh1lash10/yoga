@@ -1,11 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <circle cx="28" cy="28" r="6" fill="#10B981" />
-  <!-- Arched spine -->
-  <path d="M 28 34 Q 38 52 64 68" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
-  <!-- Supporting arms -->
-  <line x1="34" y1="42" x2="32" y2="70" stroke="#10B981" stroke-width="3" stroke-linecap="round" />
-  <!-- Legs flat on floor -->
-  <line x1="64" y1="68" x2="88" y2="72" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
-  <!-- Floor base line -->
-  <line x1="18" y1="74" x2="94" y2="74" stroke="#334155" stroke-width="2" stroke-dasharray="2 2" />
+  <circle cx="25" cy="35" r="6" fill="#FFFFFF" />
+  <!-- Curved Spine & Legs -->
+  <path d="M 28 40 Q 42 62 60 76 L 90 82" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" />
+  <!-- Arms on floor -->
+  <polyline points="38,50 34,68 46,80" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+  <line x1="15" y1="84" x2="95" y2="84" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round" />
 </svg>

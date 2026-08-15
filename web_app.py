@@ -54,6 +54,12 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/admin")
+def admin_console():
+    """Renders the KI.AI Admin Console & Posture Intelligence Operations Center."""
+    return render_template("admin.html")
+
+
 @app.route("/assets/<path:filename>")
 def serve_assets(filename):
     """Serves static assets including SVG pose figures and images."""
@@ -222,7 +228,7 @@ def get_recommendations(user_id):
 
 if __name__ == "__main__":
     local_ip = get_local_ip()
-    port = 8080
+    port = int(os.environ.get("PORT", 8080))
 
     print("=" * 65)
     print("   [KI.AI] AI-Powered Yoga & Posture Intelligence")

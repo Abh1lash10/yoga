@@ -47,6 +47,7 @@ class AddPoseWindow(QWidget):
     """Wizard for registering custom yoga poses with multi-frame webcam reference capture."""
 
     pose_created = Signal(dict)
+    pose_saved = pose_created
     cancel_requested = Signal()
 
     def __init__(self, db: Database, user: Optional[Dict[str, Any]] = None, parent=None):

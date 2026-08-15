@@ -1,15 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <circle cx="48" cy="24" r="6" fill="#10B981" />
-  <line x1="48" y1="30" x2="44" y2="52" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
-  <!-- Front extended arm -->
-  <line x1="48" y1="34" x2="22" y2="30" stroke="#10B981" stroke-width="3.5" stroke-linecap="round" />
+  <circle cx="36" cy="24" r="6" fill="#FFFFFF" />
+  <!-- Torso leaning forward -->
+  <path d="M 36 30 Q 48 44 58 50" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" />
   <!-- Standing leg -->
-  <line x1="44" y1="52" x2="44" y2="72" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
-  <line x1="44" y1="72" x2="44" y2="92" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
-  <!-- Back leg bent high backward -->
-  <line x1="44" y1="52" x2="64" y2="40" stroke="#10B981" stroke-width="3.5" stroke-linecap="round" />
-  <line x1="64" y1="40" x2="68" y2="20" stroke="#10B981" stroke-width="3.5" stroke-linecap="round" />
-  <!-- Back arm holding high foot -->
-  <line x1="48" y1="34" x2="66" y2="20" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" />
-  <circle cx="68" cy="20" r="3" fill="#34D399" />
+  <line x1="58" y1="50" x2="55" y2="92" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" />
+  <!-- Front extended arm -->
+  <line x1="42" y1="36" x2="16" y2="30" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+  <!-- Back leg arched up to hand -->
+  <path d="M 58 50 Q 86 38 80 14" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+  <!-- Back arm holding foot -->
+  <path d="M 44 34 Q 68 18 80 14" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
 </svg>

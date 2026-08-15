@@ -331,6 +331,70 @@ class Database:
             cursor.execute(query, tuple(params))
             return cursor.rowcount > 0
 
+    def create_user(
+        self,
+        name: str,
+        arg2: Any = None,
+        arg3: Any = None,
+        arg4: Any = None,
+        email: Optional[str] = None,
+        password: Optional[str] = None,
+        age: int = 25,
+        difficulty: str = "Beginner",
+        experience: str = "Beginner",
+        goal: str = "General Fitness",
+    ) -> int:
+        """Helper to create or register a user and return their integer ID (supports all calling conventions)."""
+        clean_name = str(name).strip()
+        user_email = email
+        user_pw = password or "password123"
+        user_age = age
+        user_exp = difficulty or experience or "Beginner"
+        user_goal = goal or "General Fitness"
+
+        # Check if 2nd positional argument is age (int) e.g. create_user("John", 30, "Intermediate", "Strength")
+        if isinstance(arg2, int):
+            user_age = arg2
+            if arg3 is not None:
+                user_exp = str(arg3)
+            if arg4 is not None:
+                user_goal = str(arg4)
+            if not user_email:
+                user_email = f"{clean_name.lower().replace(' ', '_')}@ki.ai"
+        elif isinstance(arg2, str) and "@" in arg2:
+            user_email = arg2
+            if arg3 is not None:
+                user_pw = str(arg3)
+            if isinstance(arg4, int):
+                user_age = arg4
+        elif arg2 is not None:
+            user_email = str(arg2)
+
+        if not user_email:
+            user_email = f"{clean_name.lower().replace(' ', '_')}@ki.ai"
+
+        success, msg, user = self.register_user(
+            name=clean_name,
+            email=user_email,
+            password=user_pw,
+            age=user_age,
+            experience=user_exp,
+            goal=user_goal,
+        )
+        if success and user:
+            return user["id"]
+        
+        existing = self.get_user_by_email(user_email)
+        return existing["id"] if existing else 1
+
+    def update_user_password(self, user_id: int, new_password: str) -> bool:
+        """Updates user's hashed password securely."""
+        pw_hash = hash_password(new_password)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?;", (pw_hash, user_id))
+            return cursor.rowcount > 0
+
     def get_user_stats(self, user_id: int) -> Dict[str, Any]:
         """Calculates comprehensive lifetime metrics for a user."""
         with self.get_connection() as conn:
@@ -366,14 +430,26 @@ class Database:
             fav_row = cursor.fetchone()
             fav_pose = fav_row["name"] if fav_row else "None yet"
 
+            total_sec = row["total_seconds"] if row else 0
+            hold_sec = row["total_hold_seconds"] if row else 0
+            avg = round(float(row["avg_score"]), 1) if row else 0.0
+            best = round(float(row["best_score"]), 1) if row else 0.0
+            sessions_count = row["total_sessions"] if row else 0
+
             return {
-                "total_sessions": row["total_sessions"] if row else 0,
-                "avg_score": round(float(row["avg_score"]), 1) if row else 0.0,
-                "overall_avg_score": round(float(row["avg_score"]), 1) if row else 0.0,
-                "best_score": round(float(row["best_score"]), 1) if row else 0.0,
-                "total_minutes": round((row["total_seconds"] if row else 0) / 60, 1),
-                "total_hold_seconds": row["total_hold_seconds"] if row else 0,
+                "total_sessions": sessions_count,
+                "completed_sessions": sessions_count,
+                "avg_score": avg,
+                "overall_avg_score": avg,
+                "average_score": avg,
+                "best_score": best,
+                "total_seconds": total_sec,
+                "total_practice_time": total_sec,
+                "total_minutes": round(total_sec / 60, 1),
+                "total_hold_seconds": hold_sec,
+                "total_hold_time": hold_sec,
                 "favorite_pose": fav_pose,
+                "most_practiced_pose": fav_pose,
             }
 
     # ==========================================
@@ -696,22 +772,25 @@ class Database:
                     return {}
             return None
 
-    def get_user_sessions(self, user_id: int) -> List[Dict[str, Any]]:
-        """Retrieves all sessions recorded for a user."""
+    def get_user_sessions(self, user_id: int, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Retrieves sessions recorded for a user with optional limit."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                """
+            query = """
                 SELECT ps.id, ps.pose_id, p.name AS pose_name, p.category, p.difficulty,
                        ps.duration, ps.average_score, ps.final_score, ps.hold_duration,
                        ps.corrections_count, ps.created_at
                 FROM practice_sessions ps
                 JOIN poses p ON ps.pose_id = p.id
                 WHERE ps.user_id = ?
-                ORDER BY ps.created_at DESC;
-                """,
-                (user_id,),
-            )
+                ORDER BY ps.created_at DESC
+            """
+            params = [user_id]
+            if limit is not None and limit > 0:
+                query += " LIMIT ?"
+                params.append(limit)
+            query += ";"
+            cursor.execute(query, tuple(params))
             return [dict(r) for r in cursor.fetchall()]
 
     # ==========================================
@@ -821,6 +900,23 @@ class Database:
                 ORDER BY ps.created_at ASC;
                 """,
                 (user_id,),
+            )
+            return [dict(r) for r in cursor.fetchall()]
+
+    def get_score_history_timeline(self, user_id: int, limit: int = 15) -> List[Dict[str, Any]]:
+        """Retrieves chronological score timeline for progress window charts."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT ps.id, ps.average_score, ps.final_score, ps.created_at, p.name AS pose_name
+                FROM practice_sessions ps
+                JOIN poses p ON ps.pose_id = p.id
+                WHERE ps.user_id = ?
+                ORDER BY ps.created_at ASC
+                LIMIT ?;
+                """,
+                (user_id, limit),
             )
             return [dict(r) for r in cursor.fetchall()]
 

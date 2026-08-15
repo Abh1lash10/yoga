@@ -638,7 +638,7 @@
     <!-- SIDEBAR NAVIGATION -->
     <aside id="sidebar">
       <div class="brand-box">
-        <div class="brand-logo">🧘</div>
+        <img src="/assets/icons/logo_icon.svg" alt="KI.AI Logo" style="width: 32px; height: 32px; filter: drop-shadow(0 0 8px rgba(16,185,129,0.4));" />
         <div>
           <div class="brand-title">KI.<span>AI</span></div>
           <div class="brand-sub">POSTURE INTELLIGENCE</div>
@@ -676,14 +676,14 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="user-pill">
+        <div class="user-pill" onclick="switchView('profile')" style="cursor: pointer;">
           <div class="avatar-circle" id="user-avatar-initial">A</div>
           <div>
             <div style="font-size: 13px; font-weight: 700; color: #FFF;" id="sidebar-user-name">Abhilash</div>
             <div style="font-size: 11px; color: var(--primary);" id="sidebar-user-goal">General Fitness</div>
           </div>
         </div>
-        <button class="btn btn-secondary" style="padding: 6px 10px;" onclick="logout()" title="Logout">🚪</button>
+        <button class="btn btn-secondary" style="padding: 6px 10px;" onclick="showLogoutModal()" title="Sign Out">🚪</button>
       </div>
     </aside>
 
@@ -697,11 +697,38 @@
             <span>🟢</span> 100% Local AI Processing
           </div>
           <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 14px;" title="Notifications">🔔</button>
-          <div style="display: flex; align-items: center; gap: 8px; background: rgba(15,23,42,0.85); border: 1px solid var(--border-card); padding: 4px 12px; border-radius: 20px; cursor: pointer;">
-            <div style="width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #FFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px;">A</div>
-            <span style="font-size: 12px; font-weight: 700; color: #FFF;">Abhilash</span>
-            <span style="font-size: 10px; background: rgba(16,185,129,0.2); color: var(--primary); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Premium</span>
-            <span style="font-size: 10px; color: var(--text-muted);">▾</span>
+          
+          <!-- User Profile Dropdown Container -->
+          <div style="position: relative;">
+            <div id="user-profile-btn" style="display: flex; align-items: center; gap: 8px; background: rgba(15,23,42,0.85); border: 1px solid var(--border-card); padding: 4px 12px; border-radius: 20px; cursor: pointer;" onclick="toggleUserDropdown(event)">
+              <div style="width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px;" id="header-avatar-initial">A</div>
+              <span style="font-size: 12px; font-weight: 700; color: #FFF;" id="header-user-name">Abhilash</span>
+              <span style="font-size: 10px; background: rgba(16,185,129,0.2); color: var(--primary); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Premium</span>
+              <span style="font-size: 10px; color: var(--text-muted);">▾</span>
+            </div>
+
+            <!-- Profile Dropdown -->
+            <div id="user-dropdown-menu" style="display: none; position: absolute; top: 38px; right: 0; width: 210px; background: #0F172A; border: 1px solid #1E293B; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 1000; padding: 6px;">
+              <div style="padding: 8px 12px; cursor: pointer; color: #E2E8F0; font-size: 12.5px; border-radius: 6px; display: flex; gap: 8px; align-items: center;" onclick="switchView('profile'); toggleUserDropdown();">
+                <span>👤</span> Profile
+              </div>
+              <div style="padding: 8px 12px; cursor: pointer; color: #E2E8F0; font-size: 12.5px; border-radius: 6px; display: flex; gap: 8px; align-items: center;" onclick="switchView('settings'); toggleUserDropdown();">
+                <span>⚙️</span> Account Settings
+              </div>
+              <div style="padding: 8px 12px; cursor: pointer; color: #E2E8F0; font-size: 12.5px; border-radius: 6px; display: flex; gap: 8px; align-items: center;" onclick="switchView('history'); toggleUserDropdown();">
+                <span>🕘</span> Practice History
+              </div>
+              <div style="padding: 8px 12px; cursor: pointer; color: #E2E8F0; font-size: 12.5px; border-radius: 6px; display: flex; gap: 8px; align-items: center;" onclick="switchView('progress'); toggleUserDropdown();">
+                <span>📈</span> Progress & Analytics
+              </div>
+              <div style="padding: 8px 12px; cursor: pointer; color: #34D399; font-size: 12.5px; border-radius: 6px; font-weight: 700; display: flex; gap: 8px; align-items: center;" onclick="window.open('/admin', '_blank'); toggleUserDropdown();">
+                <span>🛡️</span> Admin Console ↗
+              </div>
+              <div style="border-top: 1px solid #1E293B; margin: 4px 0;"></div>
+              <div style="padding: 8px 12px; cursor: pointer; color: #EF4444; font-size: 12.5px; border-radius: 6px; font-weight: 600; display: flex; gap: 8px; align-items: center;" onclick="showLogoutModal(); toggleUserDropdown();">
+                <span>🚪</span> Sign Out
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -1266,36 +1293,38 @@
           <div class="pose-card-header">
             <img src="/${realImg}" alt="${p.name} photo" class="pose-real-image" onerror="this.src='/assets/images/yoga/tadasana.png'" />
             <div class="pose-card-image-gradient"></div>
-            <span class="pose-badge ${diffClass}">${p.difficulty}</span>
-            <div class="pose-corner-figure" title="Anatomical Reference: ${p.name}" onclick="event.stopPropagation(); showPoseDetails(${p.id})">
+            <!-- Top-Right: Dedicated Anatomical Reference Figure Badge -->
+            <div class="pose-corner-figure" title="Pose Figure: ${p.name}" onclick="event.stopPropagation(); showPoseDetails(${p.id})">
               <img src="/${fig}" alt="${p.name} reference" onerror="this.src='/assets/pose_figures/tadasana.svg'" />
             </div>
           </div>
 
           <!-- CARD BODY -->
           <div class="pose-card-body">
-            <div>
+            <!-- Row 1: Pose Name (Left) + Difficulty Badge (Right) -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
               <div class="pose-card-title">${p.name}</div>
-              <div class="pose-card-sanskrit">${p.sanskrit_name || ''}</div>
+              <span class="pose-badge ${diffClass}" style="position: static; font-size: 10px; padding: 2px 7px; border-radius: 6px;">${p.difficulty}</span>
             </div>
 
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <span style="background: #0F172A; border: 1px solid var(--border-card); color: #38BDF8; border-radius: 4px; padding: 2px 6px; font-size: 10.5px; font-weight: 600;">
-                ${goalIcon} ${p.goal || 'Balance'}
-              </span>
-              <span style="background: rgba(16,185,129,0.12); border: 1px solid var(--primary); color: var(--primary); border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 700;">
-                🟢 AI Ready
-              </span>
+            <!-- Row 2: Sanskrit / English Subtitle -->
+            <div class="pose-card-sanskrit">${p.sanskrit_name || ''}</div>
+
+            <!-- Row 3: Goal with Icon -->
+            <div style="color: #34D399; font-size: 11px; font-weight: 600;">
+              ${goalIcon}  ${p.goal || 'Balance'}
             </div>
 
+            <!-- Row 4: Short Description -->
             <div class="pose-card-desc">${p.description ? p.description.substring(0, 85) + '...' : ''}</div>
 
+            <!-- Row 5: Action Footer (Practice + Bookmark) -->
             <div style="display: flex; gap: 8px; margin-top: auto;">
-              <button class="btn btn-primary" style="flex: 1; justify-content: center; font-size: 12px; height: 34px;" onclick="event.stopPropagation(); startPracticePose(${p.id})">
+              <button class="btn btn-primary" style="flex: 1; justify-content: center; font-size: 12px; height: 34px; background: #10B981; font-weight: 700;" onclick="event.stopPropagation(); startPracticePose(${p.id})">
                 <span>▶</span> Practice Pose
               </button>
-              <button class="btn btn-secondary" style="width: 36px; height: 34px; padding: 0; justify-content: center; font-size: 15px;" title="Save pose" onclick="event.stopPropagation(); this.innerText = this.innerText === '♡' ? '♥' : '♡';">
-                ♡
+              <button class="btn btn-secondary" style="width: 36px; height: 34px; padding: 0; justify-content: center; font-size: 13px;" title="Bookmark Pose" onclick="event.stopPropagation(); this.innerText = this.innerText === '🔖' ? '🏷️' : '🔖';">
+                🔖
               </button>
             </div>
           </div>
@@ -1918,9 +1947,284 @@
       }).join("");
     }
 
-    function logout() {
-      alert("You have logged out from KI.AI.");
-      location.reload();
+    function toggleUserDropdown(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById("user-dropdown-menu");
+      if (menu) {
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+    }
+
+    document.addEventListener("click", () => {
+      const menu = document.getElementById("user-dropdown-menu");
+      if (menu) menu.style.display = "none";
+    });
+
+    // ==========================================
+    // AUTHENTICATION MODAL SYSTEM
+    // ==========================================
+    function showLogoutModal() {
+      const old = document.getElementById("auth-logout-modal");
+      if (old) old.remove();
+
+      const modal = document.createElement("div");
+      modal.id = "auth-logout-modal";
+      modal.className = "modal-backdrop";
+      modal.innerHTML = `
+        <div class="modal-card" style="width: 420px; background: #0F172A; border: 1.5px solid #1E293B; border-radius: 14px; padding: 24px;">
+          <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 14px;">
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+              🚪
+            </div>
+            <div>
+              <div style="font-size: 18px; font-weight: 800; color: #FFFFFF;">Sign out of KI.AI?</div>
+              <div style="color: #94A3B8; font-size: 12.5px;">Are you sure you want to end your current session?</div>
+            </div>
+          </div>
+          <div style="color: #64748B; font-size: 11.5px; line-height: 1.4; margin-bottom: 20px;">
+            Your practice history and posture analytics are securely saved locally.
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="document.getElementById('auth-logout-modal').remove()">
+              Cancel
+            </button>
+            <button class="btn btn-primary" style="flex: 1; justify-content: center; background: #EF4444;" onclick="executeLogout()">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function executeLogout() {
+      const modal = document.getElementById("auth-logout-modal");
+      if (modal) modal.remove();
+      showSignInModal();
+    }
+
+    function showSignInModal() {
+      const old = document.getElementById("auth-signin-modal");
+      if (old) old.remove();
+
+      const modal = document.createElement("div");
+      modal.id = "auth-signin-modal";
+      modal.className = "modal-backdrop";
+      modal.innerHTML = `
+        <div class="modal-card" style="width: 780px; max-width: 95vw; display: flex; padding: 0; background: #0B1120; border: 1.5px solid #1E293B; border-radius: 16px; overflow: hidden;">
+          <!-- LEFT BRAND HERO -->
+          <div style="flex: 5; background: linear-gradient(135deg, #064E3B 0%, #0F172A 50%, #061520 100%); border-right: 1px solid #1E293B; padding: 36px 30px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+                <img src="/assets/icons/logo_icon.svg" alt="KI.AI Logo" style="width: 40px; height: 40px; filter: drop-shadow(0 0 10px rgba(16,185,129,0.5));" />
+                <div>
+                  <div style="font-size: 26px; font-weight: 900; color: #FFF; letter-spacing: -0.5px;">KI.<span style="color: #10B981;">AI</span></div>
+                  <div style="font-size: 9px; font-weight: 700; color: #94A3B8; letter-spacing: 2px;">POSTURE INTELLIGENCE</div>
+                </div>
+              </div>
+              <div style="font-style: italic; color: #E2E8F0; font-size: 13px; margin-top: 14px; margin-bottom: 24px;">
+                “Train smarter. Move better. Practice with AI.”
+              </div>
+              <div style="background: rgba(15,23,42,0.65); border: 1px solid rgba(16,185,129,0.25); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="color: #F1F5F9; font-size: 11.5px;">🟢 Real-Time Joint Posture Correction</div>
+                <div style="color: #F1F5F9; font-size: 11.5px;">☀ 12-Step Surya Yoga Flow Coaching</div>
+                <div style="color: #F1F5F9; font-size: 11.5px;">🔒 100% Local AI Computer Vision</div>
+              </div>
+            </div>
+            <div style="color: #64748B; font-size: 10.5px; text-align: center;">
+              Local AI • No Cloud Video Streaming
+            </div>
+          </div>
+
+          <!-- RIGHT SIGN IN FORM -->
+          <div style="flex: 6; padding: 36px 32px; display: flex; flex-direction: column; justify-content: center; gap: 12px;">
+            <div>
+              <div style="font-size: 22px; font-weight: 800; color: #FFF;">Welcome back</div>
+              <div style="color: #94A3B8; font-size: 12px; margin-top: 2px;">Sign in to continue your KI.AI practice.</div>
+            </div>
+
+            <div id="signin-error" style="display: none; background: rgba(239,68,68,0.15); border: 1px solid #EF4444; color: #EF4444; border-radius: 6px; padding: 8px; font-size: 11.5px;"></div>
+
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 600; color: #CBD5E1; margin-bottom: 4px;">Email Address</label>
+              <input type="email" id="signin-email" value="abhilash@ki.ai" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 8px; padding: 9px 12px; color: #FFF; font-size: 12.5px;" />
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 600; color: #CBD5E1; margin-bottom: 4px;">Password</label>
+              <div style="display: flex; gap: 6px;">
+                <input type="password" id="signin-pass" value="password123" style="flex: 1; background: #131D2E; border: 1px solid #1E293B; border-radius: 8px; padding: 9px 12px; color: #FFF; font-size: 12.5px;" />
+                <button type="button" class="btn btn-secondary" style="padding: 0 10px;" onclick="const el=document.getElementById('signin-pass'); el.type = el.type === 'password' ? 'text' : 'password';">👁️</button>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px;">
+              <label style="color: #94A3B8; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" checked /> Remember me
+              </label>
+              <a href="#" style="color: #10B981; text-decoration: none; font-weight: 600;" onclick="showForgotPasswordModal()">Forgot password?</a>
+            </div>
+
+            <button class="btn btn-primary" style="justify-content: center; height: 38px; font-weight: 700; font-size: 13px;" onclick="executeSignIn()">
+              Sign In
+            </button>
+
+            <button class="btn btn-secondary" style="justify-content: center; height: 36px; font-size: 12px;" onclick="executeSignIn()">
+              Continue with Google
+            </button>
+
+            <div style="text-align: center; color: #94A3B8; font-size: 12px; margin-top: 4px;">
+              Don't have an account? <a href="#" style="color: #10B981; text-decoration: none; font-weight: 700;" onclick="showSignUpModal()">Create account</a>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function executeSignIn() {
+      const email = document.getElementById("signin-email")?.value.trim();
+      const pass = document.getElementById("signin-pass")?.value.trim();
+      if (!email || !pass) {
+        const err = document.getElementById("signin-error");
+        if (err) { err.innerText = "Please enter both email and password."; err.style.display = "block"; }
+        return;
+      }
+
+      const modal = document.getElementById("auth-signin-modal");
+      if (modal) modal.remove();
+      switchView('dashboard');
+    }
+
+    function showSignUpModal() {
+      const old = document.getElementById("auth-signin-modal");
+      if (old) old.remove();
+
+      const modal = document.createElement("div");
+      modal.id = "auth-signup-modal";
+      modal.className = "modal-backdrop";
+      modal.innerHTML = `
+        <div class="modal-card" style="width: 520px; background: #0B1120; border: 1.5px solid #1E293B; border-radius: 16px; padding: 28px;">
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
+            <img src="/assets/icons/logo_icon.svg" alt="KI.AI Logo" style="width: 32px; height: 32px;" />
+            <div>
+              <div style="font-size: 20px; font-weight: 800; color: #FFF;">Create your account</div>
+              <div style="color: #94A3B8; font-size: 11.5px;">Start your personalized AI yoga journey.</div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 600; color: #CBD5E1; margin-bottom: 2px;">Full Name *</label>
+              <input type="text" id="reg-name" placeholder="Abhilash Sharma" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 10px; color: #FFF; font-size: 12px;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 600; color: #CBD5E1; margin-bottom: 2px;">Email Address *</label>
+              <input type="email" id="reg-email" placeholder="name@example.com" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 10px; color: #FFF; font-size: 12px;" />
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 11px; font-weight: 600; color: #CBD5E1; margin-bottom: 2px;">Password *</label>
+                <input type="password" id="reg-pass" placeholder="Min. 6 chars" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 10px; color: #FFF; font-size: 12px;" />
+              </div>
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 11px; font-weight: 600; color: #CBD5E1; margin-bottom: 2px;">Confirm Password *</label>
+                <input type="password" id="reg-confirm" placeholder="Re-type password" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 10px; color: #FFF; font-size: 12px;" />
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 11px; font-weight: 600; color: #CBD5E1; margin-bottom: 2px;">Fitness Level</label>
+                <select id="reg-diff" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 10px; color: #FFF; font-size: 12px;">
+                  <option>Beginner</option>
+                  <option>Intermediate</option>
+                  <option>Advanced</option>
+                </select>
+              </div>
+              <div style="flex: 1;">
+                <label style="display: block; font-size: 11px; font-weight: 600; color: #CBD5E1; margin-bottom: 2px;">Primary Goal</label>
+                <select id="reg-goal" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 10px; color: #FFF; font-size: 12px;">
+                  <option>General Fitness</option>
+                  <option>Flexibility</option>
+                  <option>Strength</option>
+                  <option>Balance</option>
+                  <option>Stress Relief</option>
+                </select>
+              </div>
+            </div>
+
+            <label style="color: #94A3B8; font-size: 11px; display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+              <input type="checkbox" checked /> I agree to Terms & Privacy Policy
+            </label>
+
+            <button class="btn btn-primary" style="justify-content: center; height: 38px; font-weight: 700; margin-top: 6px;" onclick="executeSignUp()">
+              Create Account
+            </button>
+
+            <div style="text-align: center; color: #94A3B8; font-size: 12px;">
+              Already have an account? <a href="#" style="color: #10B981; text-decoration: none; font-weight: 700;" onclick="document.getElementById('auth-signup-modal').remove(); showSignInModal();">Sign In</a>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function executeSignUp() {
+      const modal = document.getElementById("auth-signup-modal");
+      if (modal) modal.remove();
+      showVerifyEmailModal();
+    }
+
+    function showVerifyEmailModal() {
+      const modal = document.createElement("div");
+      modal.id = "auth-verify-modal";
+      modal.className = "modal-backdrop";
+      modal.innerHTML = `
+        <div class="modal-card" style="width: 440px; background: #0B1120; border: 1.5px solid #1E293B; border-radius: 16px; padding: 30px; text-align: center;">
+          <div style="font-size: 42px; margin-bottom: 8px;">📧 ✨</div>
+          <div style="font-size: 20px; font-weight: 800; color: #FFF; margin-bottom: 6px;">Verify your email</div>
+          <div style="color: #94A3B8; font-size: 12.5px; line-height: 1.4; margin-bottom: 20px;">
+            We've sent a verification link to your email address. Verify your account to start using KI.AI.
+          </div>
+          <button class="btn btn-primary" style="width: 100%; justify-content: center; height: 38px; margin-bottom: 8px;" onclick="document.getElementById('auth-verify-modal').remove(); showSignInModal();">
+            Continue to Sign In
+          </button>
+          <button class="btn btn-secondary" style="width: 100%; justify-content: center; height: 34px;" onclick="alert('Verification link resent!');">
+            Resend Email
+          </button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function showForgotPasswordModal() {
+      const old = document.getElementById("auth-signin-modal");
+      if (old) old.remove();
+
+      const modal = document.createElement("div");
+      modal.id = "auth-forgot-modal";
+      modal.className = "modal-backdrop";
+      modal.innerHTML = `
+        <div class="modal-card" style="width: 440px; background: #0B1120; border: 1.5px solid #1E293B; border-radius: 16px; padding: 28px;">
+          <div style="font-size: 32px; margin-bottom: 8px;">🔐</div>
+          <div style="font-size: 20px; font-weight: 800; color: #FFF; margin-bottom: 4px;">Forgot your password?</div>
+          <div style="color: #94A3B8; font-size: 12px; margin-bottom: 16px;">
+            Enter your email and we'll send you a secure password reset link.
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 11px; font-weight: 600; color: #CBD5E1; margin-bottom: 4px;">Email Address</label>
+            <input type="email" id="forgot-email" placeholder="name@example.com" style="width: 100%; background: #131D2E; border: 1px solid #1E293B; border-radius: 6px; padding: 8px 10px; color: #FFF; font-size: 12px;" />
+          </div>
+          <button class="btn btn-primary" style="width: 100%; justify-content: center; height: 38px; margin-bottom: 10px;" onclick="alert('Password reset link sent to your email!'); document.getElementById('auth-forgot-modal').remove(); showSignInModal();">
+            Send Reset Link
+          </button>
+          <div style="text-align: center;">
+            <a href="#" style="color: #10B981; font-size: 12px; font-weight: 600; text-decoration: none;" onclick="document.getElementById('auth-forgot-modal').remove(); showSignInModal();">Back to Sign In</a>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
     }
   </script>
 </body>

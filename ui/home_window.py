@@ -35,6 +35,12 @@ class HomeWindow(QWidget):
     navigate_to_custom_pose = Signal()
     navigate_to_progress = Signal()
 
+    # Aliases for MainWindow signal connection
+    start_practice_clicked = navigate_to_practice
+    view_library_clicked = navigate_to_library
+    view_progress_clicked = navigate_to_progress
+    add_pose_clicked = navigate_to_custom_pose
+
     def __init__(self, db: Database, user: Optional[Dict[str, Any]] = None, parent=None):
         super().__init__(parent)
         self.db = db

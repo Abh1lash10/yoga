@@ -145,6 +145,9 @@ class SuryaYogaWindow(QWidget):
         self.reference_panel = ReferencePosePanel(initial_pose, parent=self)
         self.reference_panel.ghost_mode_toggled.connect(lambda v: setattr(self, "ghost_mode", v))
         right_box.addWidget(self.reference_panel)
+
+        step_card = QFrame()
+        step_card.setProperty("class", "card")
         s_layout = QVBoxLayout(step_card)
         s_layout.setContentsMargins(14, 12, 14, 12)
 

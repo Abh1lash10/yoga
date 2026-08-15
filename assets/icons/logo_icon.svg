@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="50%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(0, -4)">
+    <!-- Head -->
+    <circle cx="60" cy="36" r="15" fill="none" stroke="url(#iconGrad)" stroke-width="4.5" />
+    <!-- Torso outline -->
+    <path d="M 60 51 C 48 51 38 64 34 80 L 46 80 C 46 72 50 64 60 64 C 70 64 74 72 74 80 L 86 80 C 82 64 72 51 60 51 Z" fill="none" stroke="url(#iconGrad)" stroke-width="4" stroke-linejoin="round" />
+    <!-- Prayer Arms -->
+    <path d="M 40 72 L 54 70 L 54 54 C 54 52 60 52 60 54 L 60 70 L 66 70 L 80 72" fill="none" stroke="url(#iconGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 57 52 L 63 52 L 63 66 L 57 66 Z" fill="url(#iconGrad)" />
+    <!-- Crossed Lotus Legs Base -->
+    <path d="M 20 98 C 34 88 56 90 60 94 C 64 90 86 88 100 98 C 104 104 92 112 76 108 C 64 106 60 100 60 100 C 60 100 56 106 44 108 C 28 112 16 104 20 98 Z" fill="none" stroke="url(#iconGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
