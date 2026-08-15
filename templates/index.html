@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KI.AI — AI-Powered Yoga & Posture Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js for beautiful analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- MediaPipe Pose for client-side webcam tracking -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0B1120;
+      --bg-surface: #0F172A;
+      --bg-card: #1E293B;
+      --bg-card-hover: #26354A;
+      --primary: #10B981;
+      --primary-hover: #059669;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --primary-light: rgba(16, 185, 129, 0.12);
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --border-card: #334155;
+      --border-glow: #10B981;
+      --color-correct: #10B981;
+      --color-warning: #F59E0B;
+      --color-incorrect: #EF4444;
+      --color-gray: #94A3B8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    /* Layout */
+    #app-container {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    aside#sidebar {
+      width: 260px;
+      background-color: var(--bg-surface);
+      border-right: 1px solid var(--border-card);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+
+    .brand-box {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border-card);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #064E3B, #10B981);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .brand-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #FFFFFF;
+    }
+
+    .brand-title span { color: var(--primary); }
+    .brand-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px; }
+
+    nav.nav-menu {
+      padding: 16px 12px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--bg-card);
+      color: #FFFFFF;
+    }
+
+    .nav-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      border-left: 3px solid var(--primary);
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-card);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #064E3B;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    /* Main Area */
+    main#main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+    }
+
+    header#top-header {
+      height: 64px;
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-card);
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .header-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 18px; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .badge-privacy {
+      background-color: rgba(16, 185, 129, 0.12);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .content-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+    }
+
+    /* Common Card Styles */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 20px;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover { border-color: #475569; }
+
+    .btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: #FFFFFF;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    .btn-secondary {
+      background-color: var(--border-card);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover { background-color: #475569; }
+    .btn-danger {
+      background-color: var(--color-incorrect);
+      color: #FFFFFF;
+    }
+
+    /* Grid Layouts */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .metric-val { font-size: 26px; font-weight: 800; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .metric-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+    /* Library Cards */
+    .pose-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+    @media (max-width: 1280px) {
+      .pose-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 900px) {
+      .pose-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      .pose-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pose-grid.list-view {
+      grid-template-columns: 1fr;
+    }
+    .pose-grid.list-view .pose-card {
+      flex-direction: row;
+      min-height: 140px;
+    }
+    .pose-grid.list-view .pose-card-header {
+      width: 220px;
+      height: 100%;
+      border-radius: 12px 0 0 12px;
+    }
+
+    .pose-card {
+      background-color: #131D2E;
+      border: 1.5px solid var(--border-card);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+    .pose-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 10px 24px -10px rgba(16, 185, 129, 0.3);
+    }
+    .pose-card-header {
+      height: 160px;
+      position: relative;
+      overflow: hidden;
+      background: #0B1120;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pose-real-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .pose-card:hover .pose-real-image {
+      transform: scale(1.05);
+    }
+    .pose-card-image-gradient {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: linear-gradient(to top, rgba(19, 29, 46, 1), rgba(19, 29, 46, 0));
+      pointer-events: none;
+    }
+    .pose-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid var(--border-card);
+      color: var(--primary);
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      z-index: 2;
+    }
+    .pose-badge.beginner { color: #10B981; border-color: #10B981; background: rgba(6, 78, 59, 0.85); }
+    .pose-badge.intermediate { color: #38BDF8; border-color: #38BDF8; background: rgba(14, 116, 144, 0.85); }
+    .pose-badge.advanced { color: #A855F7; border-color: #A855F7; background: rgba(88, 28, 135, 0.85); }
+
+    .pose-corner-figure {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 42px;
+      height: 42px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1.5px solid var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .pose-corner-figure:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+      border-color: #34D399;
+      background: rgba(6, 78, 59, 0.95);
+    }
+    .pose-corner-figure img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+    .pose-card-body {
+      padding: 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pose-card-title { font-size: 16px; font-weight: 800; color: #FFFFFF; }
+    .pose-card-sanskrit { font-size: 11px; color: #94A3B8; font-style: italic; }
+    .pose-card-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.35; flex: 1; }
+
+    /* Camera Practice Screen */
+    .practice-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      height: calc(100vh - 120px);
+    }
+
+    .camera-container {
+      background-color: #000;
+      border: 2px solid var(--border-card);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #webcam-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    #skeleton-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+      pointer-events: none;
+    }
+
+    .camera-overlay-banner {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .practice-hud {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    /* Overall Posture Score Badge */
+    .score-indicator-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .score-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tier-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .tier-excellent, .tier-good {
+      background: rgba(16, 185, 129, 0.18);
+      color: var(--color-correct);
+      border-color: var(--color-correct);
+    }
+    .tier-warning {
+      background: rgba(245, 158, 11, 0.18);
+      color: var(--color-warning);
+      border-color: var(--color-warning);
+    }
+    .tier-incorrect {
+      background: rgba(239, 68, 68, 0.18);
+      color: var(--color-incorrect);
+      border-color: var(--color-incorrect);
+    }
+
+    .score-large-number {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--primary);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Status Dot Checklist */
+    .status-row {
+      background-color: #162032;
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 12.5px;
+    }
+
+    .status-dot {
+      font-size: 12px;
+      margin-right: 8px;
+    }
+
+    .status-tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Feedback card */
+    .feedback-card {
+      background-color: var(--bg-card);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* Surya Stepper */
+    .surya-stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+
+    .step-node {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .step-node.completed {
+      background: var(--primary);
+      color: #FFF;
+      border-color: var(--primary);
+    }
+    .step-node.active {
+      background: #064E3B;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+    .step-line {
+      width: 14px;
+      height: 2px;
+      background: var(--border-card);
+    }
+    .step-line.active { background: var(--primary); }
+
+    /* Hide/Show Views */
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-card);
+      border-radius: 14px;
+      width: 440px;
+      padding: 28px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar">
+      <div class="brand-box">
+        <div class="brand-logo">🧘</div>
+        <div>
+          <div class="brand-title">KI.<span>AI</span></div>
+          <div class="brand-sub">POSTURE INTELLIGENCE</div>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-btn active" onclick="switchView('dashboard')">
+          <span>🏠</span> Dashboard
+        </button>
+        <button class="nav-btn" onclick="switchView('library')">
+          <span>🧘</span> Yoga Library
+        </button>
+        <button class="nav-btn" onclick="switchView('surya')">
+          <span>☀</span> Surya Yoga (12 Steps)
+        </button>
+        <button class="nav-btn" onclick="startPracticePose(1)">
+          <span>🎥</span> Live Practice
+        </button>
+        <button class="nav-btn" onclick="switchView('recommendations')">
+          <span>✨</span> Recommendations
+        </button>
+        <button class="nav-btn" onclick="switchView('history')">
+          <span>🕘</span> Practice History
+        </button>
+        <button class="nav-btn" onclick="switchView('progress')">
+          <span>📈</span> Progress & Analytics
+        </button>
+        <button class="nav-btn" onclick="switchView('profile')">
+          <span>👤</span> Profile
+        </button>
+        <button class="nav-btn" onclick="switchView('settings')">
+          <span>⚙</span> Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar-circle" id="user-avatar-initial">A</div>
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: #FFF;" id="sidebar-user-name">Abhilash</div>
+            <div style="font-size: 11px; color: var(--primary);" id="sidebar-user-goal">General Fitness</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="padding: 6px 10px;" onclick="logout()" title="Logout">🚪</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main id="main-content">
+      <!-- TOP HEADER -->
+      <header id="top-header">
+        <div class="header-title" id="page-heading">Yoga Library</div>
+        <div class="header-right">
+          <div class="badge-privacy">
+            <span>🟢</span> 100% Local AI Processing
+          </div>
+          <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 14px;" title="Notifications">🔔</button>
+          <div style="display: flex; align-items: center; gap: 8px; background: rgba(15,23,42,0.85); border: 1px solid var(--border-card); padding: 4px 12px; border-radius: 20px; cursor: pointer;">
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #FFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px;">A</div>
+            <span style="font-size: 12px; font-weight: 700; color: #FFF;">Abhilash</span>
+            <span style="font-size: 10px; background: rgba(16,185,129,0.2); color: var(--primary); padding: 1px 6px; border-radius: 4px; font-weight: 700;">Premium</span>
+            <span style="font-size: 10px; color: var(--text-muted);">▾</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT BODY -->
+      <div class="content-viewport">
+
+        <!-- 1. DASHBOARD VIEW -->
+        <section id="view-dashboard" class="view-section active">
+          <div style="margin-bottom: 24px;">
+            <h2 style="font-size: 24px; font-weight: 800; color: #FFFFFF;" id="welcome-banner">Welcome back, Abhilash 👋</h2>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Ready for your next intelligent posture correction session?</p>
+          </div>
+
+          <!-- METRICS ROW -->
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-icon">📊</div>
+              <div>
+                <div class="metric-val" id="dash-avg-score">88%</div>
+                <div class="metric-label">Average Accuracy</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">🏆</div>
+              <div>
+                <div class="metric-val" id="dash-best-score">96%</div>
+                <div class="metric-label">Personal Best</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">🧘‍♂️</div>
+              <div>
+                <div class="metric-val" id="dash-total-sessions">14</div>
+                <div class="metric-label">Total Workouts</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">⏱️</div>
+              <div>
+                <div class="metric-val" id="dash-practice-time">182 m</div>
+                <div class="metric-label">Practice Time</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TODAY'S RECOMMENDATION HERO -->
+          <div class="card" style="background: linear-gradient(135deg, #064E3B, #0F172A); border-color: var(--primary); margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; padding: 24px;">
+            <div>
+              <div style="color: #A7F3D0; font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px;">RECOMMENDED FOR YOUR GOAL</div>
+              <h3 style="font-size: 22px; font-weight: 800; color: #FFFFFF;" id="hero-rec-name">Warrior II (Virabhadrasana II)</h3>
+              <p style="color: #E2E8F0; font-size: 13px; max-width: 540px; margin: 8px 0 16px; line-height: 1.4;">
+                Strengthens legs, opens hips and chest, and develops full-body endurance with knee-to-angle alignment.
+              </p>
+              <button class="btn btn-primary" onclick="startPracticePose(2)">
+                <span>🎥</span> Start Practice Now
+              </button>
+            </div>
+            <div style="font-size: 72px; opacity: 0.85;">🧘‍♀️</div>
+          </div>
+
+          <!-- QUICK ACCESS TILES -->
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 14px;">Quick Actions</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+            <div class="card" style="cursor: pointer;" onclick="switchView('surya')">
+              <div style="font-size: 24px; margin-bottom: 8px;">☀</div>
+              <div style="font-weight: 700; color: #FFF;">Surya Yoga</div>
+              <div style="font-size: 12px; color: var(--text-muted);">12-Step Sun Salutation</div>
+            </div>
+            <div class="card" style="cursor: pointer;" onclick="switchView('library')">
+              <div style="font-size: 24px; margin-bottom: 8px;">📚</div>
+              <div style="font-weight: 700; color: #FFF;">Yoga Library</div>
+              <div style="font-size: 12px; color: var(--text-muted);">12 Validated Poses</div>
+            </div>
+            <div class="card" style="cursor: pointer;" onclick="switchView('progress')">
+              <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+              <div style="font-weight: 700; color: #FFF;">Progress Charts</div>
+              <div style="font-size: 12px; color: var(--text-muted);">Score Progression</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. YOGA LIBRARY VIEW -->
+        <section id="view-library" class="view-section">
+          <div style="margin-bottom: 16px;">
+            <h2 style="font-size: 24px; font-weight: 800; color: #FFFFFF;">Yoga Library</h2>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 2px;">Browse poses with verified anatomical angle rules.</p>
+          </div>
+
+          <!-- Professional Filter Row -->
+          <div class="card" style="padding: 10px 14px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #111827; border: 1px solid var(--border-card);">
+            <div style="flex: 3; min-width: 180px;">
+              <input type="text" id="library-search" placeholder="🔍 Search poses..." style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-card); color: #FFF; padding: 8px 14px; border-radius: 8px; font-size: 13px;" oninput="renderLibrary()">
+            </div>
+            
+            <div style="flex: 2; min-width: 130px;">
+              <select id="filter-category" onchange="renderLibrary()" style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-card); color: #FFF; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+                <option value="all">All Categories</option>
+                <option value="Standing">Standing</option>
+                <option value="Balance">Balance</option>
+                <option value="Strength">Strength</option>
+                <option value="Flexibility">Flexibility</option>
+                <option value="Relaxation">Relaxation</option>
+                <option value="Inversion">Inversion</option>
+                <option value="Seated">Seated</option>
+              </select>
+            </div>
+
+            <div style="flex: 2; min-width: 130px;">
+              <select id="filter-difficulty" onchange="renderLibrary()" style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-card); color: #FFF; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+                <option value="all">All Difficulty</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+
+            <div style="flex: 2; min-width: 130px;">
+              <select id="filter-goal" onchange="renderLibrary()" style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-card); color: #FFF; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+                <option value="all">All Goals</option>
+                <option value="Balance">Balance</option>
+                <option value="Strength">Strength</option>
+                <option value="Flexibility">Flexibility</option>
+                <option value="Relaxation">Relaxation</option>
+                <option value="General Fitness">General Fitness</option>
+              </select>
+            </div>
+
+            <div style="flex: 2; min-width: 120px;">
+              <select id="filter-sort" onchange="renderLibrary()" style="width: 100%; background: var(--bg-card); border: 1px solid var(--border-card); color: #FFF; padding: 8px 12px; border-radius: 8px; font-size: 12px;">
+                <option value="name">Sort: A–Z</option>
+                <option value="diff">Sort: Difficulty</option>
+                <option value="hold">Sort: Duration</option>
+              </select>
+            </div>
+
+            <div style="display: flex; gap: 4px;">
+              <button class="btn btn-secondary" id="btn-view-grid" style="padding: 7px 12px; font-size: 12px; background: rgba(16,185,129,0.2); border-color: var(--primary); color: var(--primary);" onclick="setLibraryViewMode('grid')">▦ Grid</button>
+              <button class="btn btn-secondary" id="btn-view-list" style="padding: 7px 12px; font-size: 12px;" onclick="setLibraryViewMode('list')">☷ List</button>
+            </div>
+          </div>
+
+          <div class="pose-grid" id="library-pose-grid">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </section>
+
+        <!-- 3. SURYA YOGA (12 STEPS) VIEW -->
+        <section id="view-surya" class="view-section">
+          <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 style="font-size: 22px; font-weight: 800;">☀ Surya Yoga (Sun Salutation)</h2>
+              <p style="color: var(--text-muted); font-size: 13px;">Guided 12-step sequential flow with real-time posture checking.</p>
+            </div>
+            <div style="font-weight: 700; color: var(--primary); font-size: 16px;" id="surya-step-counter">Step 01 / 12</div>
+          </div>
+
+          <!-- Stepper Dots -->
+          <div class="surya-stepper" id="surya-stepper-bar">
+            <!-- Steps 1 to 12 rendered via JS -->
+          </div>
+
+          <!-- Step Content & Practice Launcher -->
+          <div class="card" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 14px;">
+            <div>
+              <div style="color: var(--primary); font-size: 11px; font-weight: 700;" id="surya-step-sanskrit">PRANAMASANA</div>
+              <h3 style="font-size: 24px; font-weight: 800; margin: 6px 0 12px;" id="surya-step-name">Prayer Pose</h3>
+              
+              <div style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--primary); padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13px;" id="surya-breathing-cue">
+                💨 <b>Breathing:</b> Exhale — Bring palms together at heart center.
+              </div>
+
+              <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-bottom: 14px;" id="surya-step-desc">
+                Establish centered posture, steady heart rate, and focus.
+              </p>
+
+              <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="prevSuryaStep()">◀ Previous Step</button>
+                <button class="btn btn-primary" onclick="launchSuryaPractice()">▶ Practice This Step</button>
+                <button class="btn btn-secondary" onclick="nextSuryaStep()">Next Step ▶</button>
+              </div>
+            </div>
+
+            <div style="background: #0B1120; border-radius: 10px; border: 1px solid var(--border-card); display: flex; align-items: center; justify-content: center; min-height: 240px; font-size: 50px;" id="surya-step-visual">
+              🧘‍♂️
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. LIVE CAMERA PRACTICE VIEW -->
+        <section id="view-practice" class="view-section">
+          
+          <!-- Live Practice Top Header Bar -->
+          <div class="card" style="background: linear-gradient(135deg, #0F172A, #064E3B); border: 1px solid var(--primary); padding: 10px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div>
+                <span style="font-size: 10.5px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px;">CURRENT POSE</span>
+                <div style="font-size: 16px; font-weight: 800; color: #FFF;" id="hdr-pose-name">Vrikshasana</div>
+              </div>
+              <div style="border-left: 1px solid #334155; padding-left: 14px;">
+                <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted);">REFERENCE</span>
+                <div style="font-size: 13px; color: #34D399; font-style: italic; font-weight: 600;" id="hdr-sanskrit">Tree Pose</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="text-align: right;">
+                <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted);">TARGET HOLD</span>
+                <div style="font-size: 14px; font-weight: 700; color: #A78BFA;" id="hdr-hold-target">30s</div>
+              </div>
+              <div style="background: rgba(16, 185, 129, 0.2); border: 1px solid var(--primary); color: var(--primary); font-weight: 800; padding: 4px 12px; border-radius: 8px; font-size: 13px;" id="hdr-match-pill">
+                AI Match: 0%
+              </div>
+            </div>
+          </div>
+
+          <!-- Transition Banner Notification -->
+          <div id="pose-transition-banner" style="display: none; background: rgba(16,185,129,0.25); border: 1px solid var(--primary); color: #34D399; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-align: center; margin-bottom: 12px;">
+            Next Pose → Reference Updated ✨
+          </div>
+
+          <div class="practice-layout">
+            
+            <!-- LEFT: Live Webcam Feed + Skeleton Overlay + Ghost Overlay -->
+            <div class="camera-container">
+              <video id="webcam-video" autoplay playsinline muted></video>
+              <canvas id="skeleton-canvas"></canvas>
+              
+              <div class="camera-overlay-banner">
+                <span id="cam-status-dot">🟢</span>
+                <span id="cam-status-text">AI Pose Tracking Active</span>
+              </div>
+
+              <!-- Bottom Action Bar on Video -->
+              <div style="position: absolute; bottom: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; align-items: center; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-card); z-index: 5;">
+                <div style="display: flex; gap: 10px;">
+                  <button class="btn btn-primary" id="btn-practice-toggle" onclick="togglePracticeSession()">▶ Start Workout</button>
+                  <button class="btn btn-secondary" onclick="resetPracticeCounters()">🔄 Reset</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #38BDF8; cursor: pointer;">
+                    <input type="checkbox" id="chk-ghost-ref" onchange="toggleGhostReference(this.checked)" style="accent-color: #38BDF8;">
+                    <span>👤 Ghost Reference</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); cursor: pointer;">
+                    <input type="checkbox" id="chk-voice" checked style="accent-color: var(--primary);">
+                    <span>🔊 Voice</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT: Dedicated REFERENCE POSE Panel & Comparison -->
+            <div class="practice-hud" id="ref-pose-hud-panel">
+              
+              <!-- Reference Pose Card -->
+              <div class="card" style="padding: 14px; background: #0F172A; border: 1.5px solid var(--border-card);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div>
+                    <span style="color: var(--primary); font-size: 10px; font-weight: 800; letter-spacing: 0.5px;">REFERENCE POSE</span>
+                    <h3 style="font-size: 17px; font-weight: 800; color: #FFF; margin: 2px 0;" id="ref-pose-name">Vrikshasana</h3>
+                    <div style="color: #94A3B8; font-size: 12px; font-style: italic;" id="ref-pose-sanskrit">Tree Pose</div>
+                  </div>
+                  <!-- Size mode controls -->
+                  <div style="display: flex; gap: 3px;">
+                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" title="Minimal Mode" onclick="setRefSizeMode('minimal')">−</button>
+                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" title="Normal Mode" onclick="setRefSizeMode('normal')">○</button>
+                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" title="Learning Mode (Beginner)" onclick="setRefSizeMode('learning')">+</button>
+                  </div>
+                </div>
+
+                <!-- Reference Figure Display Area -->
+                <div id="ref-figure-wrapper" style="background: linear-gradient(135deg, #0B1120, #064E3B); border: 1.5px solid var(--primary); border-radius: 10px; height: 130px; display: flex; align-items: center; justify-content: center; margin: 10px 0; padding: 8px;">
+                  <img id="ref-figure-img" src="/assets/pose_figures/vrikshasana.svg" alt="Pose Reference" style="max-height: 100%; max-width: 100%; object-fit: contain;" onerror="this.src='/assets/pose_figures/tadasana.svg'" />
+                </div>
+
+                <!-- Alignment Checkpoints -->
+                <div id="ref-checkpoints-box" style="background: #111827; border: 1px solid #1E293B; border-radius: 8px; padding: 8px; margin-bottom: 10px;">
+                  <div style="font-size: 10px; font-weight: 800; color: #38BDF8; letter-spacing: 0.5px; margin-bottom: 4px;">KEY ALIGNMENT CUES</div>
+                  <div id="ref-cues-list" style="font-size: 11.5px; color: #E2E8F0; display: flex; flex-direction: column; gap: 3px;">
+                    <!-- Cues rendered dynamically -->
+                  </div>
+                </div>
+
+                <!-- Compare With Reference (REFERENCE vs YOUR POSE) -->
+                <div id="ref-comparison-box" style="background: #131D2E; border: 1px solid #334155; border-radius: 8px; padding: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 10.5px; font-weight: 800; color: #FFF;">REFERENCE vs YOUR POSE</span>
+                    <span id="ref-match-badge" class="status-tag tier-good" style="font-size: 10px;">0% Match</span>
+                  </div>
+                  <div id="ref-diff-list" style="display: flex; flex-direction: column; gap: 3px; font-size: 11px;">
+                    <!-- Dynamic joint alignment differences -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Score & Timer Strip -->
+              <div class="score-indicator-card" style="padding: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--text-muted);">LIVE POSTURE SCORE</div>
+                    <div class="score-large-number" style="font-size: 28px;" id="hud-score-number">0%</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 18px; font-weight: 800; color: #FFF;" id="hud-timer-display">00 / 20s</div>
+                    <div style="font-size: 10.5px; color: var(--text-dim);" id="hud-timer-status">Score ≥80% to hold</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Actionable Feedback -->
+              <div class="feedback-card" style="padding: 10px;">
+                <div style="font-size: 10.5px; font-weight: 700; color: var(--primary);">AI COACH GUIDANCE</div>
+                <div id="hud-feedback-text" style="font-size: 12px; font-weight: 500; color: #F1F5F9;">
+                  Stand 2–3 meters in front of the camera and begin your posture.
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+        <!-- 5. RECOMMENDATIONS VIEW -->
+        <section id="view-recommendations" class="view-section">
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 22px; font-weight: 800;">Personalized AI Recommendations</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Tailored to your goal, experience level, and accuracy history.</p>
+          </div>
+          <div class="pose-grid" id="recs-pose-grid"></div>
+        </section>
+
+        <!-- 6. PRACTICE HISTORY VIEW -->
+        <section id="view-history" class="view-section">
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 22px; font-weight: 800;">Practice History</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Review past workouts, accuracy scores, and hold times.</p>
+          </div>
+
+          <div class="card" style="padding: 0; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead style="background: var(--bg-surface); border-bottom: 1px solid var(--border-card); color: var(--text-muted);">
+                <tr>
+                  <th style="padding: 12px 16px;">Pose</th>
+                  <th style="padding: 12px 16px;">Date</th>
+                  <th style="padding: 12px 16px;">Duration</th>
+                  <th style="padding: 12px 16px;">Average Score</th>
+                  <th style="padding: 12px 16px;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 7. PROGRESS & ANALYTICS VIEW -->
+        <section id="view-progress" class="view-section">
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 22px; font-weight: 800;">Progress & Analytics</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Biomechanical accuracy trends over time.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="card">
+              <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 14px;">Score Progression Over Time</h3>
+              <canvas id="chart-progress" height="220"></canvas>
+            </div>
+            <div class="card">
+              <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 14px;">Pose Accuracy Breakdown</h3>
+              <canvas id="chart-poses" height="220"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. PROFILE VIEW -->
+        <section id="view-profile" class="view-section">
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 22px; font-weight: 800;">User Profile</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Manage your posture training preferences.</p>
+          </div>
+
+          <div class="card" style="max-width: 500px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+              <div class="avatar-circle" style="width: 54px; height: 54px; font-size: 20px;">A</div>
+              <div>
+                <h3 style="font-size: 18px; font-weight: 700;" id="prof-name">Abhilash</h3>
+                <div style="color: var(--text-muted); font-size: 12px;" id="prof-email">abhilash@ki.ai</div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+              <div><b>Experience Level:</b> <span id="prof-exp" style="color: var(--primary);">Intermediate</span></div>
+              <div><b>Primary Goal:</b> <span id="prof-goal" style="color: var(--primary);">General Fitness</span></div>
+              <div><b>Account Created:</b> <span id="prof-created">August 2026</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. SETTINGS VIEW -->
+        <section id="view-settings" class="view-section">
+          <div style="margin-bottom: 20px;">
+            <h2 style="font-size: 22px; font-weight: 800;">Settings</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Configure application and camera parameters.</p>
+          </div>
+
+          <div class="card" style="max-width: 600px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+              <label style="font-weight: 600; font-size: 13px;">Camera Input</label>
+              <select style="width: 100%; margin-top: 6px; padding: 8px 12px; background: var(--bg-surface); border: 1px solid var(--border-card); color: #FFF; border-radius: 6px;">
+                <option>Default Integrated Webcam (0)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-weight: 600; font-size: 13px;">Detection Confidence Threshold</label>
+              <input type="range" min="40" max="90" value="60" style="width: 100%; accent-color: var(--primary); margin-top: 6px;">
+            </div>
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--primary); padding: 12px; border-radius: 8px; font-size: 12px; color: var(--text-main);">
+              <b>🔒 Privacy Guarantee:</b> All camera processing is performed 100% locally. KI.AI never uploads or records your video stream.
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // State
+    let currentUser = { id: 1, name: "Abhilash", email: "abhilash@ki.ai", goal: "General Fitness", experience: "Intermediate" };
+    let allPoses = [];
+    let suryaPoses = [];
+    let activePose = null;
+    let suryaIndex = 0;
+    let isPracticing = false;
+    let holdCount = 0;
+    let holdTimerInterval = null;
+    let lastSpokenCue = "";
+    let lastSpokenTime = 0;
+
+    // Initialize
+    window.addEventListener("DOMContentLoaded", async () => {
+      await loadPoses();
+      await loadSurya();
+      await loadHistory();
+      setupWebcam();
+    });
+
+    async function loadPoses() {
+      try {
+        const res = await fetch("/api/poses");
+        allPoses = await res.json();
+        renderLibrary();
+        renderRecommendations();
+        if (allPoses.length > 0) activePose = allPoses[0];
+      } catch (e) { console.error("Error loading poses:", e); }
+    }
+
+    async function loadSurya() {
+      try {
+        const res = await fetch("/api/surya");
+        suryaPoses = await res.json();
+        renderSuryaStepper();
+        updateSuryaStepView();
+      } catch (e) { console.error("Error loading Surya:", e); }
+    }
+
+    function switchView(viewName) {
+      document.querySelectorAll(".view-section").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+      
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) target.classList.add("active");
+
+      document.getElementById("page-heading").innerText = 
+        viewName === "dashboard" ? "Dashboard" :
+        viewName === "library" ? "Yoga Library" :
+        viewName === "surya" ? "Surya Yoga (12 Steps)" :
+        viewName === "practice" ? "Live Practice" :
+        viewName === "recommendations" ? "Recommendations" :
+        viewName === "history" ? "Practice History" :
+        viewName === "progress" ? "Progress & Analytics" :
+        viewName === "profile" ? "Profile" : "Settings";
+
+      if (viewName === "progress") renderCharts();
+    }
+
+    let libraryViewMode = "grid";
+
+    function setLibraryViewMode(mode) {
+      libraryViewMode = mode;
+      const grid = document.getElementById("library-pose-grid");
+      const btnGrid = document.getElementById("btn-view-grid");
+      const btnList = document.getElementById("btn-view-list");
+
+      if (mode === "list") {
+        grid.classList.add("list-view");
+        btnList.style.background = "rgba(16,185,129,0.2)";
+        btnList.style.borderColor = "var(--primary)";
+        btnList.style.color = "var(--primary)";
+        btnGrid.style.background = "transparent";
+        btnGrid.style.borderColor = "var(--border-card)";
+        btnGrid.style.color = "var(--text-muted)";
+      } else {
+        grid.classList.remove("list-view");
+        btnGrid.style.background = "rgba(16,185,129,0.2)";
+        btnGrid.style.borderColor = "var(--primary)";
+        btnGrid.style.color = "var(--primary)";
+        btnList.style.background = "transparent";
+        btnList.style.borderColor = "var(--border-card)";
+        btnList.style.color = "var(--text-muted)";
+      }
+    }
+
+    function renderLibrary() {
+      const grid = document.getElementById("library-pose-grid");
+      const search = (document.getElementById("library-search")?.value || "").trim().toLowerCase();
+      const cat = document.getElementById("filter-category")?.value || "all";
+      const diff = document.getElementById("filter-difficulty")?.value || "all";
+      const goal = document.getElementById("filter-goal")?.value || "all";
+      const sort = document.getElementById("filter-sort")?.value || "name";
+
+      let filtered = allPoses.filter(p => {
+        if (p.category === "Surya Namaskar" && cat !== "Surya Namaskar" && !search) return false;
+        if (search) {
+          const match = (p.name && p.name.toLowerCase().includes(search)) ||
+                        (p.sanskrit_name && p.sanskrit_name.toLowerCase().includes(search)) ||
+                        (p.description && p.description.toLowerCase().includes(search));
+          if (!match) return false;
+        }
+        if (cat !== "all" && p.category !== cat) return false;
+        if (diff !== "all" && p.difficulty !== diff) return false;
+        if (goal !== "all" && p.goal !== goal) return false;
+        return true;
+      });
+
+      if (sort === "name") {
+        filtered.sort((a,b) => a.name.localeCompare(b.name));
+      } else if (sort === "diff") {
+        const order = { "Beginner": 1, "Intermediate": 2, "Advanced": 3 };
+        filtered.sort((a,b) => (order[a.difficulty] || 1) - (order[b.difficulty] || 1));
+      } else if (sort === "hold") {
+        filtered.sort((a,b) => (b.hold_duration || 20) - (a.hold_duration || 20));
+      }
+
+      if (!filtered.length) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">No yoga poses match the selected filters.</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const cleanName = p.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const fig = p.figure_path || `assets/pose_figures/${cleanName}.svg`;
+        const realImg = p.image_path || `assets/images/yoga/${cleanName}.png`;
+        const diffClass = (p.difficulty || 'beginner').toLowerCase();
+        const goalIcon = p.goal && (p.goal.includes("Strength") ? "💪" : (p.goal.includes("Relaxation") ? "🌿" : "🧘"));
+
+        return `
+        <div class="pose-card" onclick="showPoseDetails(${p.id})">
+          <!-- TOP REALISTIC IMAGE AREA -->
+          <div class="pose-card-header">
+            <img src="/${realImg}" alt="${p.name} photo" class="pose-real-image" onerror="this.src='/assets/images/yoga/tadasana.png'" />
+            <div class="pose-card-image-gradient"></div>
+            <span class="pose-badge ${diffClass}">${p.difficulty}</span>
+            <div class="pose-corner-figure" title="Anatomical Reference: ${p.name}" onclick="event.stopPropagation(); showPoseDetails(${p.id})">
+              <img src="/${fig}" alt="${p.name} reference" onerror="this.src='/assets/pose_figures/tadasana.svg'" />
+            </div>
+          </div>
+
+          <!-- CARD BODY -->
+          <div class="pose-card-body">
+            <div>
+              <div class="pose-card-title">${p.name}</div>
+              <div class="pose-card-sanskrit">${p.sanskrit_name || ''}</div>
+            </div>
+
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <span style="background: #0F172A; border: 1px solid var(--border-card); color: #38BDF8; border-radius: 4px; padding: 2px 6px; font-size: 10.5px; font-weight: 600;">
+                ${goalIcon} ${p.goal || 'Balance'}
+              </span>
+              <span style="background: rgba(16,185,129,0.12); border: 1px solid var(--primary); color: var(--primary); border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 700;">
+                🟢 AI Ready
+              </span>
+            </div>
+
+            <div class="pose-card-desc">${p.description ? p.description.substring(0, 85) + '...' : ''}</div>
+
+            <div style="display: flex; gap: 8px; margin-top: auto;">
+              <button class="btn btn-primary" style="flex: 1; justify-content: center; font-size: 12px; height: 34px;" onclick="event.stopPropagation(); startPracticePose(${p.id})">
+                <span>▶</span> Practice Pose
+              </button>
+              <button class="btn btn-secondary" style="width: 36px; height: 34px; padding: 0; justify-content: center; font-size: 15px;" title="Save pose" onclick="event.stopPropagation(); this.innerText = this.innerText === '♡' ? '♥' : '♡';">
+                ♡
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join("");
+    }
+
+    function showPoseDetails(poseId) {
+      const pose = allPoses.find(p => p.id === poseId) || suryaPoses.find(p => p.id === poseId);
+      if (!pose) return;
+      const cleanName = pose.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const fig = pose.figure_path || `assets/pose_figures/${cleanName}.svg`;
+      const realImg = pose.image_path || `assets/images/yoga/${cleanName}.png`;
+
+      // Remove existing modal if any
+      const oldModal = document.getElementById("pose-details-modal");
+      if (oldModal) oldModal.remove();
+
+      const modal = document.createElement("div");
+      modal.id = "pose-details-modal";
+      modal.className = "modal-backdrop";
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+      modal.innerHTML = `
+        <div class="modal-card" style="width: 580px; max-height: 88vh; overflow-y: auto; position: relative;">
+          <!-- Top Pose Realistic Hero with Corner Figure -->
+          <div style="position: relative; height: 180px; border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: #0B1120;">
+            <img src="/${realImg}" alt="${pose.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/assets/images/yoga/tadasana.png'" />
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(to top, rgba(17,24,39,1), rgba(17,24,39,0));"></div>
+            
+            <div class="pose-corner-figure" style="position: absolute; top: 12px; right: 12px; width: 48px; height: 48px; background: rgba(15,23,42,0.9); border: 2px solid var(--primary);">
+              <img src="/${fig}" alt="${pose.name} reference" style="width: 36px; height: 36px;" />
+            </div>
+
+            <div style="position: absolute; bottom: 10px; left: 14px;">
+              <h3 style="font-size: 22px; font-weight: 800; color: #FFF; margin: 0;">${pose.name}</h3>
+              <div style="color: var(--primary); font-size: 13px; font-weight: 600;">${pose.sanskrit_name || ''}</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; align-items: center;">
+            <span class="pose-badge ${pose.difficulty.toLowerCase()}" style="position: static;">${pose.difficulty}</span>
+            <span style="background: #0F172A; border: 1px solid var(--border-card); color: #38BDF8; border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: 600;">🎯 ${pose.goal || 'General Fitness'}</span>
+            <span style="background: #0F172A; border: 1px solid var(--border-card); color: #94A3B8; border-radius: 4px; padding: 3px 8px; font-size: 11px;">🏷️ ${pose.category || 'Standing'}</span>
+            <span style="background: rgba(16,185,129,0.12); border: 1px solid var(--primary); color: var(--primary); border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: 700; margin-left: auto;">🟢 AI Ready</span>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 13px; color: #FFF; margin-bottom: 4px;">Overview</div>
+            <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.45;">${pose.description || 'No description.'}</p>
+          </div>
+
+          <!-- AI Analysis Points -->
+          <div style="background: rgba(15,23,42,0.6); border: 1px solid var(--border-card); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 12.5px; color: #FFF; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <span>🤖</span> AI Verification Checkpoints
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11.5px; color: var(--primary);">
+              <div>✓ Shoulder Alignment & Level</div>
+              <div>✓ Hip & Pelvis Symmetry</div>
+              <div>✓ Knee Angle & Articulation</div>
+              <div>✓ Spine Vertical Centering</div>
+              <div>✓ Balance & Joint Stability</div>
+              <div>✓ Hold Duration Target (${pose.hold_duration || 20}s)</div>
+            </div>
+          </div>
+
+          ${pose.instructions ? `
+            <div style="margin-bottom: 14px;">
+              <div style="font-weight: 700; font-size: 13px; color: #FFF; margin-bottom: 6px;">Step-by-Step Instructions</div>
+              <div style="font-size: 12px; color: var(--text-dim); line-height: 1.5;">
+                ${Array.isArray(pose.instructions) ? pose.instructions.map((ins, i) => `<div style="margin-bottom: 4px;"><b>${i+1}.</b> ${ins}</div>`).join('') : pose.instructions}
+              </div>
+            </div>
+          ` : ''}
+
+          ${pose.benefits && pose.benefits.length ? `
+            <div style="margin-bottom: 16px;">
+              <div style="font-weight: 700; font-size: 13px; color: #FFF; margin-bottom: 6px;">Health Benefits</div>
+              <div style="font-size: 12px; color: var(--primary); line-height: 1.45;">
+                ${Array.isArray(pose.benefits) ? pose.benefits.map(b => `<div style="margin-bottom: 3px;">✓ ${b}</div>`).join('') : pose.benefits}
+              </div>
+            </div>
+          ` : ''}
+
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-secondary" style="flex: 1;" onclick="document.getElementById('pose-details-modal').remove()">Close</button>
+            <button class="btn btn-secondary" style="width: 44px; justify-content: center; font-size: 16px;" title="Save Pose" onclick="this.innerText = this.innerText === '♡' ? '♥' : '♡';">♡</button>
+            <button class="btn btn-primary" style="flex: 2; justify-content: center;" onclick="document.getElementById('pose-details-modal').remove(); startPracticePose(${pose.id})">
+              <span>▶</span> Practice With AI
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function renderSuryaStepper() {
+      const bar = document.getElementById("surya-stepper-bar");
+      bar.innerHTML = suryaPoses.map((p, idx) => `
+        <div class="step-node ${idx === suryaIndex ? 'active' : (idx < suryaIndex ? 'completed' : '')}" onclick="setSuryaStep(${idx})">
+          ${idx + 1}
+        </div>
+        ${idx < 11 ? `<div class="step-line ${idx < suryaIndex ? 'active' : ''}"></div>` : ''}
+      `).join("");
+    }
+
+    function setSuryaStep(idx) {
+      suryaIndex = idx;
+      renderSuryaStepper();
+      updateSuryaStepView();
+    }
+
+    function prevSuryaStep() {
+      if (suryaIndex > 0) setSuryaStep(suryaIndex - 1);
+    }
+
+    function nextSuryaStep() {
+      if (suryaIndex < suryaPoses.length - 1) setSuryaStep(suryaIndex + 1);
+    }
+
+    function updateSuryaStepView() {
+      if (!suryaPoses[suryaIndex]) return;
+      const step = suryaPoses[suryaIndex];
+      document.getElementById("surya-step-counter").innerText = `Step ${String(suryaIndex + 1).padStart(2, '0')} / 12`;
+      document.getElementById("surya-step-name").innerText = step.name.replace(/^Step \d+:\s*/, '');
+      document.getElementById("surya-step-sanskrit").innerText = step.sanskrit_name || 'Surya Asana';
+      document.getElementById("surya-step-desc").innerText = step.description || '';
+      document.getElementById("surya-breathing-cue").innerHTML = `💨 <b>Breathing:</b> Inhale/Exhale rhythmically with posture.`;
+    }
+
+    function launchSuryaPractice() {
+      if (suryaPoses[suryaIndex]) {
+        startPracticePose(suryaPoses[suryaIndex].id);
+      }
+    }
+
+    function startPracticePose(poseId) {
+      const pose = allPoses.find(p => p.id === poseId) || suryaPoses.find(p => p.id === poseId) || allPoses[0];
+      if (!pose) return;
+      activePose = pose;
+
+      document.getElementById("hud-pose-name").innerText = pose.name;
+      document.getElementById("hud-sanskrit").innerText = pose.sanskrit_name || '';
+      document.getElementById("hud-hold-target").innerText = `Hold: ${pose.hold_duration || 20}s`;
+
+      switchView("practice");
+      resetPracticeCounters();
+    }
+
+    function resetPracticeCounters() {
+      holdCount = 0;
+      clearInterval(holdTimerInterval);
+      document.getElementById("hud-timer-display").innerText = `00 / ${activePose?.hold_duration || 20}s`;
+      document.getElementById("hud-timer-status").innerText = "Score ≥80% to hold";
+      document.getElementById("hud-score-number").innerText = "0%";
+    }
+
+    function togglePracticeSession() {
+      isPracticing = !isPracticing;
+      const btn = document.getElementById("btn-practice-toggle");
+      if (isPracticing) {
+        btn.innerText = "⏹ Finish Workout";
+        btn.className = "btn btn-danger";
+        startHoldTicker();
+      } else {
+        btn.innerText = "▶ Start Workout";
+        btn.className = "btn btn-primary";
+        clearInterval(holdTimerInterval);
+      }
+    }
+
+    function startHoldTicker() {
+      clearInterval(holdTimerInterval);
+      holdTimerInterval = setInterval(() => {
+        if (!isPracticing || !activePose) return;
+        const currentScore = parseInt(document.getElementById("hud-score-number").innerText) || 0;
+        const targetHold = activePose.hold_duration || 20;
+
+        if (currentScore >= 80) {
+          holdCount++;
+          document.getElementById("hud-timer-display").innerText = `${String(holdCount).padStart(2, '0')} / ${targetHold}s`;
+          document.getElementById("hud-timer-status").innerText = "✓ Posture holding steady!";
+          document.getElementById("hud-timer-status").style.color = "var(--primary)";
+
+          if (holdCount >= targetHold) {
+            speakVoiceCue("Target hold complete! Outstanding posture.");
+            alert(`🎉 Target Hold Achieved for ${activePose.name}! Score: ${currentScore}%`);
+            togglePracticeSession();
+          }
+        } else {
+          document.getElementById("hud-timer-status").innerText = "⏸ Hold Paused — Correct Posture";
+          document.getElementById("hud-timer-status").style.color = "var(--color-warning)";
+        }
+      }, 1000);
+    }
+
+    function speakVoiceCue(text) {
+      if (!document.getElementById("chk-voice").checked) return;
+      const now = Date.now();
+      if (now - lastSpokenTime < 4000 && lastSpokenCue === text) return;
+      lastSpokenCue = text;
+      lastSpokenTime = now;
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 1.0;
+        window.speechSynthesis.speak(utter);
+      }
+    }
+
+    // MediaPipe Web Camera Tracking & Direct getUserMedia Fallback
+    async function setupWebcam() {
+      const videoElement = document.getElementById("webcam-video");
+      const canvasElement = document.getElementById("skeleton-canvas");
+      const canvasCtx = canvasElement.getContext("2d");
+      const statusDot = document.getElementById("cam-status-dot");
+      const statusText = document.getElementById("cam-status-text");
+
+      try {
+        // 1. Request direct camera stream
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+          audio: false
+        });
+        videoElement.srcObject = stream;
+        await videoElement.play();
+
+        statusDot.innerText = "🟢";
+        statusText.innerText = "Camera Feed Active — Tracking Posture";
+
+        // 2. Initialize MediaPipe Pose
+        const pose = new Pose({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+        });
+
+        pose.setOptions({
+          modelComplexity: 1,
+          smoothLandmarks: true,
+          minDetectionConfidence: 0.6,
+          minTrackingConfidence: 0.6
+        });
+
+        pose.onResults((results) => {
+          canvasElement.width = videoElement.videoWidth || 640;
+          canvasElement.height = videoElement.videoHeight || 480;
+          canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+          if (results.poseLandmarks) {
+            drawSkeleton(canvasCtx, results.poseLandmarks, canvasElement.width, canvasElement.height);
+            sendLandmarksToBackend(results.poseLandmarks);
+          }
+        });
+
+        // Loop animation frame for MediaPipe
+        async function processFrame() {
+          if (!videoElement.paused && !videoElement.ended) {
+            await pose.send({ image: videoElement });
+          }
+          requestAnimationFrame(processFrame);
+        }
+        processFrame();
+
+      } catch (err) {
+        console.error("Camera access error:", err);
+        statusDot.innerText = "🔴";
+        statusText.innerText = "Camera Permission Required (Click Allow in Browser)";
+        
+        // Show interactive prompt button in video container
+        const container = document.querySelector(".camera-container");
+        if (container && !document.getElementById("btn-cam-retry")) {
+          const btn = document.createElement("button");
+          btn.id = "btn-cam-retry";
+          btn.className = "btn btn-primary";
+          btn.style.position = "absolute";
+          btn.style.zIndex = "10";
+          btn.innerHTML = "📷 Allow Camera Access";
+          btn.onclick = () => {
+            btn.remove();
+            setupWebcam();
+          };
+          container.appendChild(btn);
+        }
+      }
+    }
+
+    let ghostModeEnabled = false;
+    let refSizeMode = "normal";
+
+    const CANONICAL_TEMPLATES = {
+      "tadasana": { "NOSE": [0.5, 0.14], "LEFT_SHOULDER": [0.44, 0.24], "RIGHT_SHOULDER": [0.56, 0.24], "LEFT_ELBOW": [0.41, 0.40], "RIGHT_ELBOW": [0.59, 0.40], "LEFT_WRIST": [0.40, 0.54], "RIGHT_WRIST": [0.60, 0.54], "LEFT_HIP": [0.46, 0.54], "RIGHT_HIP": [0.54, 0.54], "LEFT_KNEE": [0.46, 0.74], "RIGHT_KNEE": [0.54, 0.74], "LEFT_ANKLE": [0.46, 0.92], "RIGHT_ANKLE": [0.54, 0.92] },
+      "vrikshasana": { "NOSE": [0.5, 0.14], "LEFT_SHOULDER": [0.44, 0.24], "RIGHT_SHOULDER": [0.56, 0.24], "LEFT_ELBOW": [0.42, 0.15], "RIGHT_ELBOW": [0.58, 0.15], "LEFT_WRIST": [0.5, 0.08], "RIGHT_WRIST": [0.5, 0.08], "LEFT_HIP": [0.46, 0.52], "RIGHT_HIP": [0.54, 0.52], "LEFT_KNEE": [0.48, 0.73], "RIGHT_KNEE": [0.70, 0.62], "LEFT_ANKLE": [0.48, 0.92], "RIGHT_ANKLE": [0.50, 0.72] },
+      "virabhadrasana": { "NOSE": [0.48, 0.18], "LEFT_SHOULDER": [0.42, 0.28], "RIGHT_SHOULDER": [0.54, 0.28], "LEFT_ELBOW": [0.24, 0.28], "RIGHT_ELBOW": [0.72, 0.28], "LEFT_WRIST": [0.12, 0.28], "RIGHT_WRIST": [0.86, 0.28], "LEFT_HIP": [0.44, 0.52], "RIGHT_HIP": [0.52, 0.52], "LEFT_KNEE": [0.30, 0.68], "RIGHT_KNEE": [0.68, 0.68], "LEFT_ANKLE": [0.30, 0.90], "RIGHT_ANKLE": [0.80, 0.88] },
+      "trikonasana": { "NOSE": [0.38, 0.32], "LEFT_SHOULDER": [0.34, 0.40], "RIGHT_SHOULDER": [0.44, 0.36], "LEFT_ELBOW": [0.28, 0.56], "RIGHT_ELBOW": [0.50, 0.20], "LEFT_WRIST": [0.24, 0.72], "RIGHT_WRIST": [0.56, 0.08], "LEFT_HIP": [0.42, 0.58], "RIGHT_HIP": [0.52, 0.54], "LEFT_KNEE": [0.30, 0.75], "RIGHT_KNEE": [0.64, 0.74], "LEFT_ANKLE": [0.25, 0.92], "RIGHT_ANKLE": [0.75, 0.90] },
+      "bhujangasana": { "NOSE": [0.25, 0.26], "LEFT_SHOULDER": [0.32, 0.38], "RIGHT_SHOULDER": [0.36, 0.38], "LEFT_ELBOW": [0.32, 0.56], "RIGHT_ELBOW": [0.38, 0.56], "LEFT_WRIST": [0.32, 0.70], "RIGHT_WRIST": [0.38, 0.70], "LEFT_HIP": [0.52, 0.68], "RIGHT_HIP": [0.56, 0.68], "LEFT_KNEE": [0.70, 0.72], "RIGHT_KNEE": [0.74, 0.72], "LEFT_ANKLE": [0.86, 0.75], "RIGHT_ANKLE": [0.90, 0.75] },
+      "adho_mukha": { "NOSE": [0.40, 0.58], "LEFT_SHOULDER": [0.36, 0.50], "RIGHT_SHOULDER": [0.40, 0.50], "LEFT_ELBOW": [0.28, 0.64], "RIGHT_ELBOW": [0.30, 0.64], "LEFT_WRIST": [0.20, 0.78], "RIGHT_WRIST": [0.22, 0.78], "LEFT_HIP": [0.52, 0.28], "RIGHT_HIP": [0.56, 0.28], "LEFT_KNEE": [0.64, 0.52], "RIGHT_KNEE": [0.66, 0.52], "LEFT_ANKLE": [0.76, 0.78], "RIGHT_ANKLE": [0.78, 0.78] }
+    };
+
+    function toggleGhostReference(checked) {
+      ghostModeEnabled = checked;
+    }
+
+    function setRefSizeMode(mode) {
+      refSizeMode = mode;
+      const chkBox = document.getElementById("ref-checkpoints-box");
+      const compBox = document.getElementById("ref-comparison-box");
+      const imgWrapper = document.getElementById("ref-figure-wrapper");
+
+      if (mode === "minimal") {
+        if (chkBox) chkBox.style.display = "none";
+        if (compBox) compBox.style.display = "none";
+        if (imgWrapper) imgWrapper.style.height = "70px";
+      } else if (mode === "learning") {
+        if (chkBox) chkBox.style.display = "block";
+        if (compBox) compBox.style.display = "block";
+        if (imgWrapper) imgWrapper.style.height = "190px";
+      } else { // normal
+        if (chkBox) chkBox.style.display = "block";
+        if (compBox) compBox.style.display = "block";
+        if (imgWrapper) imgWrapper.style.height = "130px";
+      }
+    }
+
+    function startPracticePose(poseId) {
+      const p = allPoses.find(x => x.id === poseId) || suryaPoses.find(x => x.id === poseId);
+      if (!p) return;
+      activePose = p;
+      switchView("practice");
+      updateReferencePanel(p);
+
+      // Transition toast
+      const banner = document.getElementById("pose-transition-banner");
+      if (banner) {
+        banner.innerText = `Next Pose → ${p.name} Reference Updated ✨`;
+        banner.style.display = "block";
+        setTimeout(() => { banner.style.display = "none"; }, 2500);
+      }
+    }
+
+    function updateReferencePanel(p) {
+      if (!p) return;
+      // Header Top Bar
+      document.getElementById("hdr-pose-name").innerText = p.name;
+      document.getElementById("hdr-sanskrit").innerText = p.sanskrit_name || p.name;
+      document.getElementById("hdr-hold-target").innerText = (p.hold_duration || 20) + "s";
+      document.getElementById("hdr-match-pill").innerText = "AI Match: 0%";
+
+      // Right Reference Panel
+      document.getElementById("ref-pose-name").innerText = p.name;
+      document.getElementById("ref-pose-sanskrit").innerText = p.sanskrit_name || "";
+      
+      const fig = p.figure_path || `assets/pose_figures/${p.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.svg`;
+      const img = document.getElementById("ref-figure-img");
+      if (img) img.src = "/" + fig;
+
+      // Update Checkpoints Cues
+      const cuesList = document.getElementById("ref-cues-list");
+      const name = p.name.toLowerCase();
+      let cues = [];
+      if (name.includes("tree") || name.includes("vrikshasana")) {
+        cues = ["✓ Head aligned centered", "✓ Shoulders relaxed & level", "✓ Standing leg grounded & straight", "✓ Raised knee open outward 90°", "✓ Hands pressed together"];
+      } else if (name.includes("warrior") || name.includes("virabhadrasana")) {
+        cues = ["✓ Torso vertical & hips open", "✓ Front knee bent to 90°", "✓ Back leg straight and active", "✓ Arms extended parallel to floor"];
+      } else if (name.includes("triangle") || name.includes("trikonasana")) {
+        cues = ["✓ Spine elongated horizontally", "✓ Both legs straight", "✓ Top arm reaching toward sky", "✓ Chest turned open"];
+      } else if (name.includes("cobra") || name.includes("bhujangasana")) {
+        cues = ["✓ Chest lifted forward", "✓ Elbows slightly bent hugging ribs", "✓ Tops of feet pressed down", "✓ Neck in line with spine"];
+      } else {
+        cues = Array.isArray(p.instructions) && p.instructions.length ? p.instructions.slice(0, 4).map(i => "✓ " + i) : ["✓ Spine upright and aligned", "✓ Shoulders level and relaxed", "✓ Steady continuous breath"];
+      }
+
+      if (cuesList) {
+        cuesList.innerHTML = cues.map(c => `<div style="color: #E2E8F0;">${c}</div>`).join("");
+      }
+    }
+
+    function drawSkeleton(ctx, landmarks, w, h) {
+      // 1. Draw Ghost Reference Skeleton if enabled
+      if (ghostModeEnabled && activePose) {
+        drawGhostSkeleton(ctx, activePose.name, w, h);
+      }
+
+      // 2. Draw Live User Skeleton
+      const connections = [
+        [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],
+        [11, 23], [12, 24], [23, 24],
+        [23, 25], [24, 26], [25, 27], [26, 28]
+      ];
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#10B981";
+
+      connections.forEach(([i, j]) => {
+        const p1 = landmarks[i];
+        const p2 = landmarks[j];
+        if (p1 && p2 && p1.visibility > 0.4 && p2.visibility > 0.4) {
+          ctx.beginPath();
+          ctx.moveTo(p1.x * w, p1.y * h);
+          ctx.lineTo(p2.x * w, p2.y * h);
+          ctx.stroke();
+        }
+      });
+
+      landmarks.forEach((lm) => {
+        if (lm.visibility > 0.4) {
+          ctx.beginPath();
+          ctx.arc(lm.x * w, lm.y * h, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = "#10B981";
+          ctx.fill();
+          ctx.strokeStyle = "#0F172A";
+          ctx.stroke();
+        }
+      });
+    }
+
+    function drawGhostSkeleton(ctx, poseName, w, h) {
+      let key = "tadasana";
+      const clean = poseName.toLowerCase();
+      for (let k in CANONICAL_TEMPLATES) {
+        if (clean.includes(k)) { key = k; break; }
+      }
+      const t = CANONICAL_TEMPLATES[key];
+      if (!t) return;
+
+      const GHOST_CONNECTIONS = [
+        ["LEFT_SHOULDER", "RIGHT_SHOULDER"], ["LEFT_SHOULDER", "LEFT_ELBOW"], ["LEFT_ELBOW", "LEFT_WRIST"],
+        ["RIGHT_SHOULDER", "RIGHT_ELBOW"], ["RIGHT_ELBOW", "RIGHT_WRIST"],
+        ["LEFT_SHOULDER", "LEFT_HIP"], ["RIGHT_SHOULDER", "RIGHT_HIP"], ["LEFT_HIP", "RIGHT_HIP"],
+        ["LEFT_HIP", "LEFT_KNEE"], ["LEFT_KNEE", "LEFT_ANKLE"],
+        ["RIGHT_HIP", "RIGHT_KNEE"], ["RIGHT_KNEE", "RIGHT_ANKLE"]
+      ];
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.45)"; // Ethereal Cyan
+      ctx.setLineDash([4, 4]);
+
+      GHOST_CONNECTIONS.forEach(([p1, p2]) => {
+        if (t[p1] && t[p2]) {
+          ctx.beginPath();
+          ctx.moveTo(t[p1][0] * w, t[p1][1] * h);
+          ctx.lineTo(t[p2][0] * w, t[p2][1] * h);
+          ctx.stroke();
+        }
+      });
+      ctx.setLineDash([]); // Reset dash
+
+      for (let k in t) {
+        ctx.beginPath();
+        ctx.arc(t[k][0] * w, t[k][1] * h, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(56, 189, 248, 0.6)";
+        ctx.fill();
+      }
+    }
+
+    let lastAnalyzeTime = 0;
+    async function sendLandmarksToBackend(landmarksArray) {
+      const now = Date.now();
+      if (now - lastAnalyzeTime < 100 || !activePose) return; // 10 FPS rate limit
+      lastAnalyzeTime = now;
+
+      // Map landmarks array to named keys
+      const landmarkNames = [
+        "NOSE", "LEFT_EYE_INNER", "LEFT_EYE", "LEFT_EYE_OUTER", "RIGHT_EYE_INNER", "RIGHT_EYE", "RIGHT_EYE_OUTER",
+        "LEFT_EAR", "RIGHT_EAR", "MOUTH_LEFT", "MOUTH_RIGHT",
+        "LEFT_SHOULDER", "RIGHT_SHOULDER", "LEFT_ELBOW", "RIGHT_ELBOW", "LEFT_WRIST", "RIGHT_WRIST",
+        "LEFT_PINKY", "RIGHT_PINKY", "LEFT_INDEX", "RIGHT_INDEX", "LEFT_THUMB", "RIGHT_THUMB",
+        "LEFT_HIP", "RIGHT_HIP", "LEFT_KNEE", "RIGHT_KNEE", "LEFT_ANKLE", "RIGHT_ANKLE",
+        "LEFT_HEEL", "RIGHT_HEEL", "LEFT_FOOT_INDEX", "RIGHT_FOOT_INDEX"
+      ];
+
+      const landmarkDict = {};
+      landmarksArray.forEach((lm, idx) => {
+        if (landmarkNames[idx]) {
+          landmarkDict[landmarkNames[idx]] = { x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility };
+        }
+      });
+
+      try {
+        const res = await fetch("/api/analyze_posture", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ landmarks: landmarkDict, pose_id: activePose.id })
+        });
+        const evalData = await res.json();
+
+        if (evalData.status === "success") {
+          updatePracticeHUD(evalData);
+        }
+      } catch (e) { console.error("Error analyzing posture:", e); }
+    }
+
+    function updatePracticeHUD(data) {
+      const score = Math.round(data.overall_score || 0);
+      document.getElementById("hud-score-number").innerText = `${score}%`;
+      document.getElementById("hdr-match-pill").innerText = `AI Match: ${score}%`;
+
+      // Match Badge on Reference Panel
+      const refBadge = document.getElementById("ref-match-badge");
+      if (refBadge) {
+        refBadge.innerText = `${score}% Match`;
+        refBadge.className = `status-tag ${score >= 85 ? 'tier-good' : (score >= 70 ? 'tier-warning' : 'tier-incorrect')}`;
+      }
+
+      // Joint differences list in Reference Panel
+      const diffList = document.getElementById("ref-diff-list");
+      if (diffList) {
+        diffList.innerHTML = (data.joint_results || []).slice(0, 4).map(j => {
+          const code = j.status_code;
+          const diff = Math.round(Math.abs(j.deviation || 0));
+          const dot = code === 'CORRECT' ? '🟢' : (code === 'WARNING' ? '🟡' : '🔴');
+          const txt = code === 'CORRECT' ? `${j.formatted_name || j.joint_name} — Correct` : `${j.formatted_name || j.joint_name} — Adjust ${diff}°`;
+          const col = code === 'CORRECT' ? '#10B981' : (code === 'WARNING' ? '#F59E0B' : '#EF4444');
+          return `<div style="color: ${col}; font-weight: 600;">${dot} ${txt}</div>`;
+        }).join("");
+      }
+
+      // Tier Badge
+      const tierBadge = document.getElementById("hud-tier-badge");
+      if (tierBadge) {
+        const dot = data.level_info?.dot || "🟢";
+        tierBadge.innerText = `${dot} ${data.level_info?.label || 'GOOD'}`;
+        tierBadge.className = `tier-badge ${score >= 90 ? 'tier-excellent' : (score >= 80 ? 'tier-good' : (score >= 70 ? 'tier-warning' : 'tier-incorrect'))}`;
+      }
+
+      // Actionable Feedback
+      const feedbackEl = document.getElementById("hud-feedback-text");
+      if (feedbackEl) feedbackEl.innerText = data.primary_feedback || "Maintain steady breath and alignment.";
+
+      if (isPracticing && data.primary_feedback) {
+        speakVoiceCue(data.primary_feedback);
+      }
+    }
+
+    async function loadHistory() {
+      try {
+        const res = await fetch(`/api/history/${currentUser.id}`);
+        const history = await res.json();
+        const tbody = document.getElementById("history-table-body");
+        tbody.innerHTML = history.map(h => `
+          <tr style="border-bottom: 1px solid var(--border-card);">
+            <td style="padding: 12px 16px; font-weight: 600;">${h.pose_name}</td>
+            <td style="padding: 12px 16px; color: var(--text-muted);">${h.created_at ? h.created_at.substring(0, 10) : 'Today'}</td>
+            <td style="padding: 12px 16px;">${h.duration}s</td>
+            <td style="padding: 12px 16px; font-weight: 700; color: ${h.average_score >= 80 ? 'var(--primary)' : 'var(--color-warning)'};">${Math.round(h.average_score)}%</td>
+            <td style="padding: 12px 16px;"><span class="tier-badge ${h.average_score >= 80 ? 'tier-good' : 'tier-warning'}">${h.average_score >= 80 ? 'Completed' : 'Reviewed'}</span></td>
+          </tr>
+        `).join("");
+      } catch (e) { console.error("Error loading history:", e); }
+    }
+
+    function renderCharts() {
+      // Progress chart
+      const ctx1 = document.getElementById('chart-progress').getContext('2d');
+      new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+          datasets: [{
+            label: 'Accuracy Score (%)',
+            data: [72, 78, 81, 85, 84, 91, 94],
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { labels: { color: '#FFF' } } } }
+      });
+
+      // Pose breakdown chart
+      const ctx2 = document.getElementById('chart-poses').getContext('2d');
+      new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['Warrior II', 'Trikonasana', 'Tree Pose', 'Cobra', 'Chair'],
+          datasets: [{
+            label: 'Average Score',
+            data: [92, 88, 85, 90, 82],
+            backgroundColor: '#10B981'
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { labels: { color: '#FFF' } } } }
+      });
+    }
+
+    function renderRecommendations() {
+      const grid = document.getElementById("recs-pose-grid");
+      grid.innerHTML = allPoses.slice(0, 6).map(p => {
+        const fig = p.figure_path || `assets/pose_figures/${p.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.svg`;
+        return `
+        <div class="pose-card">
+          <div class="pose-card-header">
+            <span class="pose-badge">Recommended</span>
+            <div class="pose-corner-figure" title="View ${p.name} Reference" onclick="event.stopPropagation(); showPoseDetails(${p.id})">
+              <img src="/${fig}" alt="${p.name} figure" onerror="this.src='/assets/pose_figures/tadasana.svg'" />
+            </div>
+            <div class="pose-center-figure">
+              <img src="/${fig}" alt="${p.name} illustration" onerror="this.src='/assets/pose_figures/tadasana.svg'" />
+            </div>
+          </div>
+          <div class="pose-card-body">
+            <div>
+              <div class="pose-card-title">${p.name}</div>
+              <div class="pose-card-sanskrit">${p.sanskrit_name || ''}</div>
+            </div>
+            <div class="pose-card-desc">Matches your target goal: <b>${p.goal}</b></div>
+            <div style="display: flex; gap: 8px; margin-top: auto;">
+              <button class="btn btn-secondary" style="flex: 1; justify-content: center; font-size: 12px;" onclick="showPoseDetails(${p.id})">
+                Details
+              </button>
+              <button class="btn btn-primary" style="flex: 2; justify-content: center; font-size: 12px;" onclick="startPracticePose(${p.id})">
+                <span>▶</span> Practice Pose
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join("");
+    }
+
+    function logout() {
+      alert("You have logged out from KI.AI.");
+      location.reload();
+    }
+  </script>
+</body>
+</html>

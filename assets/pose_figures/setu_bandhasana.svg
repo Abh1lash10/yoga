@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="24" cy="68" r="6" fill="#10B981" />
+  <!-- Arched bridge spine -->
+  <path d="M 28 68 Q 50 38 68 50" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+  <!-- Thighs and calves -->
+  <line x1="68" y1="50" x2="80" y2="52" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+  <line x1="80" y1="52" x2="80" y2="74" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+  <!-- Arms on floor -->
+  <line x1="30" y1="68" x2="54" y2="72" stroke="#10B981" stroke-width="3" stroke-linecap="round" />
+  <circle cx="56" cy="42" r="3" fill="#34D399" />
+  <line x1="16" y1="76" x2="92" y2="76" stroke="#334155" stroke-width="2" stroke-dasharray="2 2" />
+</svg>

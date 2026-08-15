@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="40" cy="38" r="6" fill="#10B981" />
+  <!-- Spine angled down -->
+  <line x1="40" y1="44" x2="56" y2="52" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+  <!-- Vertical arm line -->
+  <line x1="32" y1="12" x2="42" y2="40" stroke="#10B981" stroke-width="3" stroke-linecap="round" />
+  <line x1="42" y1="40" x2="50" y2="82" stroke="#10B981" stroke-width="3" stroke-linecap="round" />
+  <!-- Wide triangle legs -->
+  <line x1="56" y1="52" x2="52" y2="86" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+  <line x1="56" y1="52" x2="80" y2="86" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+  <circle cx="32" cy="12" r="2.5" fill="#34D399" />
+</svg>
